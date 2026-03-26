@@ -46,7 +46,14 @@ function initScatter(containerSelector) {
   // ── Layout ────────────────────────────────────────────────────────────────
   const margin = { top: 20, right: 30, bottom: 60, left: 76 };
   const totalW  = container.clientWidth  || 860;
-  const totalH  = Math.round(totalW * 0.56);
+  // Height is normally derived from width, but when embedded in an iframe we
+  // need to ensure the chart fits the iframe height to avoid being cut off.
+  const desiredH = Math.round(totalW * 0.56);
+  const frameEl = window.frameElement;
+  const frameH = frameEl ? frameEl.getBoundingClientRect().height : null;
+  const totalH  = frameH
+    ? Math.max(360, Math.min(desiredH, Math.round(frameH - 120)))
+    : desiredH;
   const innerW  = totalW - margin.left - margin.right;
   const innerH  = totalH - margin.top  - margin.bottom;
 
