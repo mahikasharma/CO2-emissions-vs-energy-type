@@ -1,8 +1,8 @@
 // scatter.js
-// D3 Scatter Plot: Total Energy Consumption vs CO2 Emissions
-// Interactions: hover tooltip, click-to-filter region, brush selection
-// Usage: call initScatter("#scatter-container") after DOM is ready
-// Expects eia_data.csv in the same directory (or update CSV_PATH below)
+// D3 scatter plot showing renewable energy share (%) vs CO2 emissions by state
+// Interactions: hover tooltip, click-to-filter by region, brush selection
+// Call initScatter("#scatter-container") after the DOM is ready
+// Expects eia_data.csv in the same directory as the HTML file
 
 const CSV_PATH = "eia_data.csv";
 
@@ -26,8 +26,8 @@ const REGION_COLORS = {
   West:      "#8b5ea5"
 };
 
-// Which state abbreviations get a permanent label
-const LABEL_STATES = new Set(["CA","TX","FL","NY","IN","WV","VT","OR","WA","ND","LA"]);
+// States to label, chosen as outliers for renewable % vs CO2
+const LABEL_STATES = new Set(["CA","TX","WV","VT","WA","OR","ND","ID","IN","FL","NY"]);
 
 function getDominantSource(row) {
   const sources = {
@@ -43,11 +43,9 @@ function initScatter(containerSelector) {
   const container = document.querySelector(containerSelector);
   if (!container) { console.error("scatter: container not found:", containerSelector); return; }
 
-  // ── Layout ────────────────────────────────────────────────────────────────
+  // Chart dimensions and margins
   const margin = { top: 20, right: 30, bottom: 60, left: 76 };
   const totalW  = container.clientWidth  || 860;
-  // Height is normally derived from width, but when embedded in an iframe we
-  // need to ensure the chart fits the iframe height to avoid being cut off.
   const desiredH = Math.round(totalW * 0.56);
   const frameEl = window.frameElement;
   const frameH = frameEl ? frameEl.getBoundingClientRect().height : null;
@@ -57,7 +55,7 @@ function initScatter(containerSelector) {
   const innerW  = totalW - margin.left - margin.right;
   const innerH  = totalH - margin.top  - margin.bottom;
 
-  // ── DOM shell ────────────────────────────────────────────────────────────
+  // Build the container HTML: legend area, SVG, and brush info bar
   container.innerHTML = `
     <div class="scatter-controls" id="scatter-legend"></div>
     <svg id="scatter-svg"
@@ -69,7 +67,7 @@ function initScatter(containerSelector) {
     </div>
   `;
 
-  // ── Tooltip (appended to body so it floats above everything) ─────────────
+  // Create tooltip div once and append to body so it floats above all other elements
   let ttEl = document.getElementById("scatter-tooltip");
   if (!ttEl) {
     ttEl = document.createElement("div");
@@ -77,22 +75,22 @@ function initScatter(containerSelector) {
     ttEl.innerHTML = `
       <div class="stt-state"  id="stt-state"></div>
       <div class="stt-region" id="stt-region"></div>
-      <div class="stt-row"><span class="stt-k">Year</span>        <span class="stt-v" id="stt-year"></span></div>
-      <div class="stt-row"><span class="stt-k">Energy (B. Btu)</span><span class="stt-v" id="stt-energy"></span></div>
-      <div class="stt-row"><span class="stt-k">CO₂ (Mil. Mt)</span><span class="stt-v" id="stt-co2"></span></div>
-      <div class="stt-row"><span class="stt-k">Dom. Source</span>  <span class="stt-v" id="stt-source"></span></div>
+      <div class="stt-row"><span class="stt-k">Year</span>             <span class="stt-v" id="stt-year"></span></div>
+      <div class="stt-row"><span class="stt-k">Renewable Share</span>  <span class="stt-v" id="stt-renew"></span></div>
+      <div class="stt-row"><span class="stt-k">CO₂ (Mil. Mt)</span>   <span class="stt-v" id="stt-co2"></span></div>
+      <div class="stt-row"><span class="stt-k">Dom. Source</span>      <span class="stt-v" id="stt-source"></span></div>
     `;
     document.body.appendChild(ttEl);
   }
 
   const showTT = (event, d) => {
-    document.getElementById("stt-state").textContent  = d.state;
-    document.getElementById("stt-region").textContent = d.region;
-    document.getElementById("stt-region").style.color = REGION_COLORS[d.region];
-    document.getElementById("stt-year").textContent   = d.year;
-    document.getElementById("stt-energy").textContent = d3.format(",")(Math.round(d.energy));
-    document.getElementById("stt-co2").textContent    = d3.format(",")(Math.round(d.co2));
-    document.getElementById("stt-source").textContent = d.source;
+    document.getElementById("stt-state").textContent   = d.state;
+    document.getElementById("stt-region").textContent  = d.region;
+    document.getElementById("stt-region").style.color  = REGION_COLORS[d.region];
+    document.getElementById("stt-year").textContent    = d.year;
+    document.getElementById("stt-renew").textContent   = d.renewPct.toFixed(1) + "%";
+    document.getElementById("stt-co2").textContent     = d3.format(",")(Math.round(d.co2));
+    document.getElementById("stt-source").textContent  = d.source;
 
     const pad = 14, tw = 210, th = 120;
     let tx = event.clientX + pad;
@@ -107,26 +105,31 @@ function initScatter(containerSelector) {
   };
   const hideTT = () => ttEl.classList.remove("visible");
 
-  // ── Load + process data ──────────────────────────────────────────────────
+  // Load CSV, compute renewable share per row, and filter out invalid entries
   d3.csv(CSV_PATH).then(raw => {
 
     const rows = raw
       .filter(d => +d.Year >= 1981 && d.State !== "US" && REGION_MAP[d.State])
-      .map(d => ({
-        state:  d.State,
-        region: REGION_MAP[d.State],
-        year:   d.Year,
-        energy: +d.Total_Energy_Consumption,
-        co2:    +d.CO2_Emissions,
-        source: getDominantSource(d),
-      }))
-      .filter(d => isFinite(d.energy) && isFinite(d.co2));
+      .map(d => {
+        const total   = +d.Total_Energy_Consumption || 0;
+        const renew   = +d.Renewable_Consumption    || 0;
+        const renewPct = total > 0 ? (renew / total) * 100 : null;
+        return {
+          state:    d.State,
+          region:   REGION_MAP[d.State],
+          year:     d.Year,
+          renewPct,
+          co2:      +d.CO2_Emissions,
+          source:   getDominantSource(d),
+        };
+      })
+      .filter(d => d.renewPct !== null && isFinite(d.renewPct) && isFinite(d.co2));
 
     if (rows.length === 0) {
       container.innerHTML = `<p style="color:#c0552a;padding:16px">
         No data loaded. Check that <code>${CSV_PATH}</code> is in the same folder
         and has columns: State, Year, Total_Energy_Consumption, CO2_Emissions,
-        Coal_Consumption, NatGas_Consumption, Nuclear_Consumption, Renewable_Consumption.
+        Renewable_Consumption, Coal_Consumption, NatGas_Consumption, Nuclear_Consumption.
       </p>`;
       return;
     }
@@ -141,14 +144,14 @@ function initScatter(containerSelector) {
     </p>`;
   });
 
-  // ── Render ───────────────────────────────────────────────────────────────
+  // Draw the chart once data is loaded and processed
   function renderChart(rows) {
     const svg = d3.select("#scatter-svg");
     const g   = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
     // Scales
     const xScale = d3.scaleLinear()
-      .domain([0, d3.max(rows, d => d.energy) * 1.06]).nice()
+      .domain([0, d3.max(rows, d => d.renewPct) * 1.06]).nice()
       .range([0, innerW]);
 
     const yScale = d3.scaleLinear()
@@ -170,7 +173,7 @@ function initScatter(containerSelector) {
     // Axes
     g.append("g").attr("class","scatter-axis")
       .attr("transform",`translate(0,${innerH})`)
-      .call(d3.axisBottom(xScale).ticks(7).tickFormat(fmt));
+      .call(d3.axisBottom(xScale).ticks(7).tickFormat(v => v.toFixed(0) + "%"));
 
     g.append("g").attr("class","scatter-axis")
       .call(d3.axisLeft(yScale).ticks(6).tickFormat(fmt));
@@ -179,7 +182,7 @@ function initScatter(containerSelector) {
     svg.append("text").attr("class","scatter-axis-label")
       .attr("x", margin.left + innerW / 2).attr("y", totalH - 12)
       .attr("text-anchor","middle")
-      .text("Total Energy Consumption (Billion Btu)");
+      .text("Renewable Energy Share (% of Total Consumption)");
 
     svg.append("text").attr("class","scatter-axis-label")
       .attr("transform","rotate(-90)")
@@ -187,19 +190,19 @@ function initScatter(containerSelector) {
       .attr("text-anchor","middle")
       .text("CO₂ Emissions (Million Metric Tons)");
 
-    // Dots layer (below brush so brush overlay stays on top)
+    // Dots layer
     const dotsG = g.append("g").attr("class","scatter-dots");
 
     const dots = dotsG.selectAll("circle")
       .data(rows)
       .join("circle")
-        .attr("cx", d => xScale(d.energy))
+        .attr("cx", d => xScale(d.renewPct))
         .attr("cy", d => yScale(d.co2))
         .attr("r", 4.5)
-        .attr("fill",         d => REGION_COLORS[d.region])
-        .attr("fill-opacity", 0.72)
-        .attr("stroke",       d => REGION_COLORS[d.region])
-        .attr("stroke-width", 1)
+        .attr("fill",           d => REGION_COLORS[d.region])
+        .attr("fill-opacity",   0.72)
+        .attr("stroke",         d => REGION_COLORS[d.region])
+        .attr("stroke-width",   1)
         .attr("stroke-opacity", 0.4)
         .style("cursor","pointer");
 
@@ -209,14 +212,15 @@ function initScatter(containerSelector) {
       .data(rows.filter(d => LABEL_STATES.has(d.state)))
       .join("text")
         .attr("class","scatter-state-text")
-        .attr("x", d => xScale(d.energy) + 7)
+        .attr("x", d => xScale(d.renewPct) + 7)
         .attr("y", d => yScale(d.co2) + 4)
         .text(d => d.state);
 
-    // ── State: active regions + brush ──────────────────────────────────────
+    // Track which regions are active and which points are brushed
+    // brushedStates is null when no brush is active
     const regions = Object.keys(REGION_COLORS);
     let activeRegions = new Set(regions);
-    let brushedStates = null; // Set of state strings, or null = no brush
+    let brushedStates = null;
 
     function applyVisibility() {
       dots.attr("opacity", d => {
@@ -226,7 +230,7 @@ function initScatter(containerSelector) {
       });
     }
 
-    // ── Legend / filter buttons ─────────────────────────────────────────────
+    // Build region filter buttons and reset button above the chart
     const legendEl = d3.select("#scatter-legend");
 
     legendEl.append("span").attr("class","scatter-legend-label").text("Filter:");
@@ -272,7 +276,7 @@ function initScatter(containerSelector) {
         setBrushInfo(null);
       });
 
-    // ── Tooltip events ──────────────────────────────────────────────────────
+    // Show tooltip on hover, hide on mouse leave
     dots
       .on("mousemove", function(event, d) {
         if (!activeRegions.has(d.region)) return;
@@ -281,7 +285,7 @@ function initScatter(containerSelector) {
       })
       .on("mouseleave", hideTT);
 
-    // ── Brush ───────────────────────────────────────────────────────────────
+    // Brush selection: highlights points in the dragged area and shows summary stats below the chart
     function setBrushInfo(selection) {
       const el = document.getElementById("scatter-brush-info");
       if (!selection) {
@@ -291,7 +295,7 @@ function initScatter(containerSelector) {
       }
       const [[x0,y0],[x1,y1]] = selection;
       const sel = rows.filter(d => {
-        const cx = xScale(d.energy), cy = yScale(d.co2);
+        const cx = xScale(d.renewPct), cy = yScale(d.co2);
         return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1
                && activeRegions.has(d.region);
       });
@@ -300,13 +304,13 @@ function initScatter(containerSelector) {
         el.innerHTML = "No visible points in selection — try a different area";
       } else {
         brushedStates = new Set(sel.map(d => d.state + d.year));
-        const avgE = d3.mean(sel, d => d.energy);
+        const avgR = d3.mean(sel, d => d.renewPct);
         const avgC = d3.mean(sel, d => d.co2);
         const states = [...new Set(sel.map(d => d.state))].sort();
         el.innerHTML =
           `<strong>${sel.length} data point${sel.length > 1 ? "s" : ""}</strong>` +
           ` (${states.length} state${states.length>1?"s":""}: ${states.join(", ")}) &nbsp;·&nbsp; ` +
-          `Avg energy <strong>${d3.format(",.0f")(avgE)} B. Btu</strong> &nbsp;·&nbsp; ` +
+          `Avg renewable share <strong>${avgR.toFixed(1)}%</strong> &nbsp;·&nbsp; ` +
           `Avg CO₂ <strong>${d3.format(",.0f")(avgC)} mil. Mt</strong>`;
       }
       applyVisibility();
@@ -324,10 +328,8 @@ function initScatter(containerSelector) {
       .style("stroke",       "#3b6ea5")
       .style("stroke-width", "1.5");
 
-    // Make sure tooltip disappears on brush drag
     brushLayer.on("mousedown.tt", hideTT);
 
-    // Initial state
     applyVisibility();
-  } // end renderChart
-} // end initScatter
+  }
+}
