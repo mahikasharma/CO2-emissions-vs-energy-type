@@ -1,10 +1,6 @@
-/* scatter.css
-   Styles for the D3 scatter plot component.
-   Add this <link> to your GitHub Pages HTML head:
-     <link rel="stylesheet" href="scatter.css">
-*/
+/* Styles for the D3 scatter plot component. */
+/* Add <link rel="stylesheet" href="scatter.css"> to github page html head */
 
-/* ── Controls row ───────────────────────────────────────────────────────── */
 .scatter-controls {
   display: flex;
   align-items: center;
@@ -76,7 +72,6 @@
   color: #1a1714;
 }
 
-/* ── Chart internals ────────────────────────────────────────────────────── */
 .scatter-grid line {
   stroke: #e0dbd2;
   stroke-dasharray: 3 4;
@@ -105,8 +100,6 @@
   fill: #6b6560;
   pointer-events: none;
 }
-
-/* ── Brush info bar ─────────────────────────────────────────────────────── */
 .scatter-brush-info {
   margin-top: 10px;
   min-height: 20px;
@@ -121,7 +114,6 @@
   font-weight: 600;
 }
 
-/* ── Floating tooltip ───────────────────────────────────────────────────── */
 #scatter-tooltip {
   position: fixed;
   pointer-events: none;
