@@ -26,7 +26,7 @@ const REGION_COLORS = {
   West:      "#8b5ea5"
 };
 
-// States to label, chosen as outliers for renewable % vs CO2
+// States to label, outliers for renewable % vs CO2
 const LABEL_STATES = new Set(["CA","TX","WV","VT","WA","OR","ND","ID","IN","FL","NY"]);
 
 function getDominantSource(row) {
@@ -206,10 +206,19 @@ function initScatter(containerSelector) {
         .attr("stroke-opacity", 0.4)
         .style("cursor","pointer");
 
-    // State labels for key outliers
+    // Show one label per state at its average position across all years
+    const stateAvgs = Array.from(
+      d3.group(rows.filter(d => LABEL_STATES.has(d.state)), d => d.state),
+      ([state, vals]) => ({
+        state,
+        renewPct: d3.mean(vals, d => d.renewPct),
+        co2:      d3.mean(vals, d => d.co2),
+      })
+    );
+
     g.append("g").attr("class","scatter-state-labels")
       .selectAll("text")
-      .data(rows.filter(d => LABEL_STATES.has(d.state)))
+      .data(stateAvgs)
       .join("text")
         .attr("class","scatter-state-text")
         .attr("x", d => xScale(d.renewPct) + 7)
