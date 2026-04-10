@@ -12,14 +12,14 @@
 
     <h3>Overall Introduction</h3>
 
-    <p>As industrialization and urbanization accelerates across the world, air quality has become a cause of concern for many. Nations like India, Bangladesh, and Chad face the worst air quality indexes, and their citizens face the dire consequences on a daily basis(IQAir). However, this air pollution is the result of massive economic turnover in these countries. New industries are booming, bringing more jobs and wealth to the otherwise low-paid populations of these countries. To explore this facet in the United States, a question arises: 
+    <p>
+        As industrialization and urbanization accelerates across the world, air quality has become a cause of concern for many. Nations like India, Bangladesh, and Chad face the worst air quality indexes, and their citizens face the dire consequences on a daily basis(IQAir). However, this air pollution is the result of massive economic turnover in these countries. New industries are booming, bringing more jobs and wealth to the otherwise low-paid populations of these countries. To explore this facet in the United States, a question arises: 
         <strong>Do states with higher energy consumption have worse CO2 emissions, or are these emissions more strongly influenced by the type of energy sources used?
         </strong>
     </p>
-
-    <p>Our initial research revealed key insights that have shaped our thesis. A study from the  United States Environmental Protection Agency discusses human activity as the root cause of CO2 emissions. Such activities include transportation, residential and commercial use, agriculture, industry, and electric power. The World Nuclear Association states that over 40% of emissions are caused by burning fossil fuels for electric power. 
+    <p>
+        Our initial research revealed key insights that have shaped our thesis. A study from the  United States Environmental Protection Agency discusses human activity as the root cause of CO2 emissions. Such activities include transportation, residential and commercial use, agriculture, industry, and electric power. The World Nuclear Association states that over 40% of emissions are caused by burning fossil fuels for electric power. 
     </p>
-
     <p>To learn more about the relationship between industrial activity and air quality, visit the
         <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC6778223/">National Library of Medicine</a> or
         read <a href="https://news.harvard.edu/gazette/story/2023/11/harvards-legacy-of-heading-off-deaths-from-industrial-air-pollution/">Harvard's research on industrial air pollution</a>.
@@ -73,79 +73,88 @@
   
     <h3>CO₂ Emissions Intensity Across the United States</h3>
 
-    <p>The map below provides a geographic overview of CO₂ emissions intensity across U.S. states, which is measured as metric tons of CO₂ per billion BTU consumed. Hover over any state to see its name, dominant energy source, average emissions, and intensity value. Darker shading indicates higher emissions intensity
+    <p>
+        The map below provides a geographic overview of CO₂ emissions intensity across U.S. states, which is measured as metric tons of CO₂ per billion BTU consumed. Hover over any state to see its name, dominant energy source, average emissions, and intensity value. Darker shading indicates higher emissions intensity
     </p>
 
     <div class="center">
         <iframe src="choropleth.html" width="80%" height="400px" frameborder="0"></iframe>
     </div>
 
-    <p>Looking at the choropleth, the South and West regions show the highest emissions intensity, with states like California, Arizona, and Florida standing out in deep red. California leads with natural gas as its dominant source and average CO₂ emissions exceeding 85,000 metric tons which is a reflection of both its massive population and heavy reliance on gas-fired power. Arizona and Florida follow a similar pattern, where natural gas dominates the energy mix and drives up the carbon cost per unit of energy consumed. This aligns with broader EIA findings that natural gas, while cleaner than coal per Btu, still accounts for the largest share of U.S. power sector CO₂ emissions precisely because of how heavily it is relied upon in high-growth, high-consumption states.
+    <p>
+        Looking at the choropleth, the South and West regions show the highest emissions intensity, with states like California, Arizona, and Florida standing out in deep red. California leads with natural gas as its dominant source and average CO₂ emissions exceeding 85,000 metric tons which is a reflection of both its massive population and heavy reliance on gas-fired power. Arizona and Florida follow a similar pattern, where natural gas dominates the energy mix and drives up the carbon cost per unit of energy consumed. This aligns with broader EIA findings that natural gas, while cleaner than coal per Btu, still accounts for the largest share of U.S. power sector CO₂ emissions precisely because of how heavily it is relied upon in high-growth, high-consumption states.
     </p>
-
-    <p>The Northeast tells a more nuanced story. States like New Hampshire, Vermont, and Connecticut appear nearly as intense despite consuming far less total energy. These states lean heavily on nuclear and natural gas, and while nuclear itself produces zero direct emissions, the natural gas component carries significant carbon weight, and with small total energy footprints, even moderate CO₂ output pushes the intensity ratio high. By contrast, the Pacific Northwest states of Oregon and Washington stay light on the map thanks to abundant hydropower, which delivers large amounts of zero-carbon energy and keeps intensity low. The Midwest's coal-heavy states like Indiana and Ohio sit in the middle range, suggesting that while coal is the dirtiest fuel per Btu burned, the sheer volume of energy consumed in those states dilutes the intensity metric somewhat.
+    <p>
+        The Northeast tells a more nuanced story. States like New Hampshire, Vermont, and Connecticut appear nearly as intense despite consuming far less total energy. These states lean heavily on nuclear and natural gas, and while nuclear itself produces zero direct emissions, the natural gas component carries significant carbon weight, and with small total energy footprints, even moderate CO₂ output pushes the intensity ratio high. By contrast, the Pacific Northwest states of Oregon and Washington stay light on the map thanks to abundant hydropower, which delivers large amounts of zero-carbon energy and keeps intensity low. The Midwest's coal-heavy states like Indiana and Ohio sit in the middle range, suggesting that while coal is the dirtiest fuel per Btu burned, the sheer volume of energy consumed in those states dilutes the intensity metric somewhat.
     </p>   
 
     <h3>CO₂ Emissions Trends Over Time</h3>
 
-    <div class="container">
-        <div class="image">
+        <p>This line plot tracks changes in air quality over time across the U.S. Marked points indicate
+            the years with the highest and lowest recorded AQI values — hover over them to see the
+            exact figures.
+        </p>
+
+        <div class="center">
             <iframe src="line_plot.svg" width="100%" height="400px" frameborder="0"></iframe>
-        </div>
-        <div class="text">
-            <p>This line plot tracks changes in air quality over time across the U.S. Marked points indicate
-                the years with the highest and lowest recorded AQI values — hover over them to see the
-                exact figures. [NEED TO ADD TAKEAWAY: What does the trend reveal? Has air quality improved or
-                worsened over the years, and does it correlate with shifts in industrial output?]
-            </p>
-        </div>
     </div>
+
+        <p>As industrialization expands, especially across the United States with new data centers to support the AI revolution, it is expected for CO2 emissions to rise. To compare data on more relevant terms, average annual CO2 emissions were calculated per state from 2000 to 2023(most recent year in dataset). As expected, the top three states are California, Texas, and Florida, with New York close behind. These states are home to most of the biggest cities in the United States, have quite large populations, and have very high economic activity. With California having the media industry, Texas having data centers and factories, Florida with entertainment destinations, and New York being a big business hub, it is expected that CO2 emissions would be high. This leads back to our question which asks if higher energy consumption (due to the industries mentioned previously) leads to higher CO2 emissions. Which in this case, it is affirmative.
+        </p>
+        <p>California reaches a high threshold of CO2 emissions around 2018, remaining at that rate until the pandemic. In fact, all states have a steady increase from 2000 to 2008, and a significant drop due to possibly the housing crisis. After 2009, emissions started increasing steadily, except for Texas and California which had a larger spike in emissions compared to its neighbors. After flattening out, all states had a dip in emissions during the pandemic which brought the entire world to a standstill. 
+        </p>
+        <p>It is important to note that while California has the highest emissions, it is also the state with the strictest regulations regarding environmental and pollution protection.</p>
 
     <h3>Energy Consumption vs. Air Quality by State</h3>
 
     <p>The scatter plot below examines the relationship between state-level energy consumption and air
-        quality index. Each point represents a U.S. state. [ADD: describe any color encoding, axes labels,
-        or interactive features once the viz is finalized.]
+        quality index. Each point represents a U.S. state.
     </p>
 
     <div class="center">
         <iframe src="scatter.html" width="85%" height="650px" frameborder="0"></iframe>
     </div>
 
-    <p>[NEED TO ADD TAKEAWAY: Is there a visible correlation between higher energy consumption and worse AQI?
-        Are there states that consume a lot of energy but still maintain decent air quality, or vice versa?]
+    <p> The scatterplot offers a direct answer to our research question. As renewable energy share increases, carbon emissions fall drastically. The dense cluster of high emission states sits mostly under the 10% renewable share threshold, while states beyond the 15% threshold consistently show emissions under 20,000 million metric tons. There is more than a subtle sign of a negative relationship.
+    </p>
+    <p>
+    Emissions variance is highest between 0% and 10%. Fossil fuels dominate these states–particularly the south–where most points go above 100,000 million metric tons. These states cluster low on renewables and high on emissions, which is also depicted in the bar chart showing the South’s heavy reliance on natural gas and coal. It is interesting to see the differences in the Western states. Some of these states sit in extremely high positions around 120,000-135,000 with only a 5-12% renewable energy share.  </p>
+    <p>
+    It is key to note that no state goes beyond 130,000 million metric tons at a 15% renewable energy share. This threshold supports that argument that impactful decarbonization requires prioritizing renewable energy usage past historical points, not just increasing it slowly.
     </p>
 
-    <h3>AQI Distribution by Industry Sector</h3>
+    <h3>CO₂ Emissions by Dominant Energy Source and Region</h3>
 
-    <div class="container">
-        <div class="text">
-            <p>This side-by-side boxplot compares the distribution of AQI values across different industry
-                sectors, such as utilities, transportation, and agriculture. Hover over any box to see the
-                median, interquartile range, and outliers for that sector.
-            </p>
-            <p>[NEED TO ADD TAKEAWAY: Which sectors show the most variability in air quality impact? Are certain
-                industries consistently associated with worse AQI values across states?]
-            </p>
-        </div>
-        <div class="image">
-            <iframe src="boxplot.html" width="100%" height="500px" frameborder="0"></iframe>
-        </div>
+    <p>This side-by-side boxplot compares the distribution of AQI values across different industry
+        sectors, such as utilities, transportation, and agriculture. Hover over any box to see the
+        median, interquartile range, and outliers for that sector.
+    </p>
+
+    <div class="center">
+        <iframe src="boxplot.html" width="100%" height="500px" frameborder="0"></iframe>
     </div>
+
+        <p>To explore how energy sources relate to emissions across the United States, carbon emissions were broken down by each state’s dominant energy source and grouped by region. One can note that states that rely mostly on natural gas produce the highest overall carbon emissions, the south and west regions being outliers and producing more than 100,000 metric tons.
+        </p>
+        <p>The Northeastern states are particularly dependent on coal, and don’t have much utilization of nuclear power compared to the South. Additionally, states that rely more on renewable energy have the lowest emissions and tight distributions. One exception is California, who although it utilizes renewable energy, has a higher median due to its emissions from external factors.
+        </p>
+        <p>Overall, the side by side boxplot depicts that energy source matters in determining carbon emission output. 
+        </p>
 
     <h3>CO2 Emissions by State</h3>
 
     <p>The bar graph below compares CO2 emissions across U.S. states, giving a sense of which states
-        are the largest contributors to air pollution from an emissions standpoint. [NEED TO ADD: describe
-        interactions or filtering options once we finalize.]
+        are the largest contributors to air pollution from an emissions standpoint.
     </p>
 
     <div class="center">
         <iframe src="summary.html" width="95%" height="300px" frameborder="0"></iframe>
     </div>
 
-    <p>[NEED TO ADD TAKEAWAY: Which states emit the most CO2? Do high-emission states also tend to have worse
-        AQI, or does regulation and geography complicate that relationship?]
+    <p>The stacked bar chart reveals that natural gas dominates the energy mix across all four regions, but the Midwest stands apart with coal making up roughly 42% of its mix which is by far the highest of any region. This heavy coal reliance directly connects to why Midwest states like Indiana, Ohio, and West Virginia show elevated raw emissions in the boxplot. Coal produces approximately 60% more CO₂ per Btu than natural gas, so a grid running nearly half on coal carries a significant carbon penalty even before accounting for total consumption volume. The South and West follow a similar pattern of gas dominance at around 46-54%, with coal playing a secondary role, which partly explains why those regions sit in the mid-range on the intensity map despite being high-volume energy consumers.
+    </p>
+    <p>
+        The Northeast is the most interesting case in the stacked bar. It has the lowest coal share at just 18% and the highest nuclear share at 23%, yet it still appears among the most intense on the choropleth. This points to a key limitation of using nuclear in the energy mix — while it produces zero direct CO₂, it doesn't cancel out the emissions from the natural gas that makes up nearly half the Northeast's mix. The West's standout feature is its renewables share at 16%, nearly double every other region, driven largely by Pacific Northwest hydropower. Yet the West still shows moderate-to-high intensity on the map, reinforcing that renewables at current penetration levels — even the highest in the country — are not yet large enough to meaningfully pull down a region's overall carbon intensity when natural gas remains the backbone of the grid. 
     </p>
 
     <h3>Energy Mix by Region</h3>
@@ -159,9 +168,14 @@
 
     <h3>Summary and Future Work</h3>
 
-    <p>[NEED TO ADD SUMMARY: Summarize 2-3 concrete conclusions from your visualizations. ex. do states
-        with higher energy consumption tend to have worse air quality, which sectors are the biggest
-        culprits, is there evidence of a tradeoff between economic output and clean air in the U.S.]
+    <p>This analysis reveals that while total energy consumption is a strong predictor of carbon emissions, it is ultimately the type of energy source that determines a state’s or region’s carbon intensity. The data consistently shows that natural gas dominates the United States’ energy mix across all regions, and its high reliance in high-growth states like California, Texas, and Florida drives the average emissions up. On the other hand, the Midwest’s heavy coal dependence inflates its carbon output per unit of energy, while the Northwest’s hydropower reliance keeps the West Coast’s carbon intensity relatively low despite the significant energy consumption.
+    </p>
+
+    <p>
+        Historical trends further back this conclusion: emissions tracked across economic ups and downs show rises in the 2000s, a dip during the 2008 financial crisis, and falling again during the pandemic. This does suggest that economic activity and energy demand are directly related. California’s stable emissions are a nod to its strict environmental policies, and the Northeast demonstrates that nuclear power can also help in decreasing raw emissions, but it cannot completely offset the carbon cost of natural gas used in other Northeastern states.
+    </p>
+    <p>
+        All together, the evidence suggests that reducing carbon emissions from the American grid will require various steps: reducing fossil fuel usage (especially in the Midwest) and managing the volume of energy utilized through prioritizing efficiency. Policy and renewable energy is not sufficient to offset the current emission output, and as AI data centers grow exponentially throughout the nation, there will be more pressure on the grid and our environment in the near future.
     </p>
 
     <p>This analysis is limited to state-level aggregates from the EIA, which may obscure finer-grained
