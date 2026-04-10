@@ -12,19 +12,12 @@
 
     <h3>Overall Introduction</h3>
 
-    <p>As industrialization and urbanization accelerates across the world, air pollution has become a cause
-        of concern for many. Nations like India, Bangladesh, and Chad face the worst air quality indexes,
-        and their citizens face the dire consequences on a daily basis. However, this air pollution is often
-        the result of massive economic turnover — new industries bringing jobs and wealth to otherwise
-        low-income populations. To explore this tradeoff in the United States, a key question arises:
-        <strong>Is there a tradeoff between economic activity and air quality?</strong>
+    <p>As industrialization and urbanization accelerates across the world, air quality has become a cause of concern for many. Nations like India, Bangladesh, and Chad face the worst air quality indexes, and their citizens face the dire consequences on a daily basis(IQAir). However, this air pollution is the result of massive economic turnover in these countries. New industries are booming, bringing more jobs and wealth to the otherwise low-paid populations of these countries. To explore this facet in the United States, a question arises: 
+        <strong>Do states with higher energy consumption have worse CO2 emissions, or are these emissions more strongly influenced by the type of energy sources used?
+        </strong>
     </p>
 
-    <p>Our initial research revealed key insights that shaped our thesis. A study from the National Library
-        of Medicine discusses the medical effects of pollution while identifying major contributors, primarily
-        various industries including utilities (gas, electric, water), transportation, and agriculture.
-        A separate paper from Harvard specifically focuses on coal-fired power plants and their outsized
-        contribution to worsening air quality across the country.
+    <p>Our initial research revealed key insights that have shaped our thesis. A study from the  United States Environmental Protection Agency discusses human activity as the root cause of CO2 emissions. Such activities include transportation, residential and commercial use, agriculture, industry, and electric power. The World Nuclear Association states that over 40% of emissions are caused by burning fossil fuels for electric power. 
     </p>
 
     <p>To learn more about the relationship between industrial activity and air quality, visit the
@@ -36,9 +29,12 @@
 
     <p>Our analysis draws on data from the <strong>U.S. Energy Information Administration (EIA)</strong>,
         which tracks state-level energy consumption, production, and emissions across the United States.
-        [NEED TO ADD: : dataset size. number of rows and columns after cleaning, year range covered, and any notable
-        preprocessing steps like filtering states or merging datasets. Also note what information may be
-        missing, e.g. localized county-level data, certain pollutant types, etc.]
+        The dataset spans from 1981 to 2023 and includes variables across all 50 states and Washington D.C.,
+        covering energy consumption by source, CO₂ emissions by sector, and derived metrics such as
+        emissions intensity. Notable preprocessing steps included merging state-level energy and emissions
+        tables, filtering to the electric power sector, computing dominant energy source per state, and
+        calculating average annual values. County-level data and certain pollutant types (e.g. NOₓ, PM2.5)
+        are not included in this dataset.
     </p>
 
     <div class="center">
@@ -75,27 +71,26 @@
     </div>
 
   
-    <h3>Air Quality Across the United States</h3>
+    <h3>CO₂ Emissions Intensity Across the United States</h3>
 
-    <p>The map below provides a geographic overview of air quality index (AQI) values across U.S. states.
-        Hover over any state to see its name, AQI value, and other relevant metrics. Darker shading
-        indicates worse air quality.
+    <p>The map below provides a geographic overview of CO₂ emissions intensity across U.S. states, which is measured as metric tons of CO₂ per billion BTU consumed. Hover over any state to see its name, dominant energy source, average emissions, and intensity value. Darker shading indicates higher emissions intensity
     </p>
 
     <div class="center">
-        <iframe src="map.choropleth.html" width="80%" height="400px" frameborder="0"></iframe>
+        <iframe src="choropleth.html" width="80%" height="400px" frameborder="0"></iframe>
     </div>
 
-    <p>[NEED TO ADD: Which states or regions have the worst/best AQI? Are there geographic patterns, 
-        industrial midwest vs. less industrialized state. outliers.]
+    <p>Looking at the choropleth, the South and West regions show the highest emissions intensity, with states like California, Arizona, and Florida standing out in deep red. California leads with natural gas as its dominant source and average CO₂ emissions exceeding 85,000 metric tons which is a reflection of both its massive population and heavy reliance on gas-fired power. Arizona and Florida follow a similar pattern, where natural gas dominates the energy mix and drives up the carbon cost per unit of energy consumed. This aligns with broader EIA findings that natural gas, while cleaner than coal per Btu, still accounts for the largest share of U.S. power sector CO₂ emissions precisely because of how heavily it is relied upon in high-growth, high-consumption states.
     </p>
 
+    <p>The Northeast tells a more nuanced story. States like New Hampshire, Vermont, and Connecticut appear nearly as intense despite consuming far less total energy. These states lean heavily on nuclear and natural gas, and while nuclear itself produces zero direct emissions, the natural gas component carries significant carbon weight, and with small total energy footprints, even moderate CO₂ output pushes the intensity ratio high. By contrast, the Pacific Northwest states of Oregon and Washington stay light on the map thanks to abundant hydropower, which delivers large amounts of zero-carbon energy and keeps intensity low. The Midwest's coal-heavy states like Indiana and Ohio sit in the middle range, suggesting that while coal is the dirtiest fuel per Btu burned, the sheer volume of energy consumed in those states dilutes the intensity metric somewhat.
+    </p>   
 
-    <h3>AQI Trends Over Time</h3>
+    <h3>CO₂ Emissions Trends Over Time</h3>
 
     <div class="container">
         <div class="image">
-            <iframe src="line.html" width="100%" height="400px" frameborder="0"></iframe>
+            <iframe src="line_plot.svg" width="100%" height="400px" frameborder="0"></iframe>
         </div>
         <div class="text">
             <p>This line plot tracks changes in air quality over time across the U.S. Marked points indicate
