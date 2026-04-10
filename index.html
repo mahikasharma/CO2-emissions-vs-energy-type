@@ -91,7 +91,7 @@
     <h3>CO₂ Emissions Trends Over Time</h3>
 
         <p>This line plot tracks changes in air quality over time across the U.S. Marked points indicate
-            the years with the highest and lowest recorded AQI values — hover over them to see the
+            the years with the highest and lowest recorded CO2 emissions values — hover over them to see the
             exact figures.
         </p>
 
@@ -125,7 +125,7 @@
 
     <h3>CO₂ Emissions by Dominant Energy Source and Region</h3>
 
-    <p>This side-by-side boxplot compares the distribution of AQI values across different industry
+    <p>This side-by-side boxplot compares the distribution of CO2 emissions values across different industry
         sectors, such as utilities, transportation, and agriculture. Hover over any box to see the
         median, interquartile range, and outliers for that sector.
     </p>
@@ -148,8 +148,8 @@
     </p>
 
     <div class="center">
-        <iframe src="summary.html" width="95%" height="300px" frameborder="0"></iframe>
-    </div>
+        <iframe src="stacked_bar.html" width="85%" height="420px" frameborder="0"></iframe>
+        </div>
 
     <p>The stacked bar chart reveals that natural gas dominates the energy mix across all four regions, but the Midwest stands apart with coal making up roughly 42% of its mix which is by far the highest of any region. This heavy coal reliance directly connects to why Midwest states like Indiana, Ohio, and West Virginia show elevated raw emissions in the boxplot. Coal produces approximately 60% more CO₂ per Btu than natural gas, so a grid running nearly half on coal carries a significant carbon penalty even before accounting for total consumption volume. The South and West follow a similar pattern of gas dominance at around 46-54%, with coal playing a secondary role, which partly explains why those regions sit in the mid-range on the intensity map despite being high-volume energy consumers.
     </p>
@@ -161,11 +161,7 @@
 
     <p>The stacked bar chart below shows the share of each energy source across the four U.S. regions.
     </p>
-
-    <div class="center">
-    <iframe src="stacked_bar.html" width="85%" height="420px" frameborder="0"></iframe>
-    </div>
-
+    
     <h3>Summary and Future Work</h3>
 
     <p>This analysis reveals that while total energy consumption is a strong predictor of carbon emissions, it is ultimately the type of energy source that determines a state’s or region’s carbon intensity. The data consistently shows that natural gas dominates the United States’ energy mix across all regions, and its high reliance in high-growth states like California, Texas, and Florida drives the average emissions up. On the other hand, the Midwest’s heavy coal dependence inflates its carbon output per unit of energy, while the Northwest’s hydropower reliance keeps the West Coast’s carbon intensity relatively low despite the significant energy consumption.
@@ -179,7 +175,7 @@
     </p>
 
     <p>This analysis is limited to state-level aggregates from the EIA, which may obscure finer-grained
-        patterns at the county or city level. Additionally, AQI is influenced by geographic and
+        patterns at the county or city level. Additionally, CO2 emissions is influenced by geographic and
         meteorological factors beyond industrial activity alone. Future work could incorporate population
         density, GDP by sector, or longitudinal health outcome data to build a more complete picture of
         how economic activity shapes the air Americans breathe.
