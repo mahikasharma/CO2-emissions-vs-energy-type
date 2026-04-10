@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    #vis.vega-embed {
+      width: 100%;
+      display: flex;
+    }
+
+    #vis.vega-embed details,
+    #vis.vega-embed details summary {
+      position: relative;
+    }
+  </style>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-lite@5.8.0"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    (function(vegaEmbed) {
+      var spec = {"config": {"view": {"continuousWidth": 300, "continuousHeight": 300, "strokeWidth": 0}, "axis": {"gridColor": "#e8e4df", "labelFont": "sans-serif", "titleFont": "sans-serif", "titleFontSize": 12}}, "data": {"name": "data-cce07c074ab6b57f440063b2c4ee246b"}, "mark": {"type": "bar"}, "encoding": {"color": {"field": "Source", "legend": {"orient": "top", "title": "Source"}, "scale": {"domain": ["Coal", "Natural gas", "Nuclear", "Renewables"], "range": ["#73726c", "#3266ad", "#8b5ea5", "#4a9a6e"]}, "sort": ["Coal", "Natural gas", "Nuclear", "Renewables"], "type": "nominal"}, "order": {"field": "Source", "sort": "ascending", "type": "nominal"}, "tooltip": [{"field": "Region", "title": "Region", "type": "nominal"}, {"field": "Source", "title": "Source", "type": "nominal"}, {"field": "Share", "format": ".1f", "title": "Share (%)", "type": "quantitative"}, {"field": "Abs", "format": ",.0f", "title": "Avg (bil. Btu)", "type": "quantitative"}], "x": {"axis": {"labelAngle": 0}, "field": "Region", "title": null, "type": "nominal"}, "y": {"field": "Share", "scale": {"domain": [0, 100]}, "stack": "zero", "title": "Share of energy mix (%)", "type": "quantitative"}}, "height": 340, "title": {"text": "Average energy mix by region (1981\u20132023)", "fontSize": 15, "subtitle": "Share of Coal + Natural Gas + Nuclear + Renewable consumption", "subtitleColor": "#6b6560", "subtitleFontSize": 11}, "width": 500, "$schema": "https://vega.github.io/schema/vega-lite/v5.8.0.json", "datasets": {"data-cce07c074ab6b57f440063b2c4ee246b": [{"Region": "Midwest", "Source": "Coal", "Share": 42.3, "Abs": 556696}, {"Region": "Midwest", "Source": "Natural gas", "Share": 36.22, "Abs": 476617}, {"Region": "Midwest", "Source": "Nuclear", "Share": 12.62, "Abs": 166021}, {"Region": "Midwest", "Source": "Renewables", "Share": 8.86, "Abs": 116624}, {"Region": "Northeast", "Source": "Coal", "Share": 18.06, "Abs": 159576}, {"Region": "Northeast", "Source": "Natural gas", "Share": 49.25, "Abs": 435162}, {"Region": "Northeast", "Source": "Nuclear", "Share": 23.35, "Abs": 206312}, {"Region": "Northeast", "Source": "Renewables", "Share": 9.33, "Abs": 82450}, {"Region": "South", "Source": "Coal", "Share": 30.76, "Abs": 449986}, {"Region": "South", "Source": "Natural gas", "Share": 46.46, "Abs": 679733}, {"Region": "South", "Source": "Nuclear", "Share": 14.41, "Abs": 210810}, {"Region": "South", "Source": "Renewables", "Share": 8.37, "Abs": 122450}, {"Region": "West", "Source": "Coal", "Share": 23.24, "Abs": 171015}, {"Region": "West", "Source": "Natural gas", "Share": 53.71, "Abs": 395218}, {"Region": "West", "Source": "Nuclear", "Share": 7.12, "Abs": 52380}, {"Region": "West", "Source": "Renewables", "Share": 15.94, "Abs": 117271}]}};
+      var embedOpt = {"mode": "vega-lite"};
+
+      function showError(el, error){
+          el.innerHTML = ('<div style="color:red;">'
+                          + '<p>JavaScript Error: ' + error.message + '</p>'
+                          + "<p>This usually means there's a typo in your chart specification. "
+                          + "See the javascript console for the full traceback.</p>"
+                          + '</div>');
+          throw error;
+      }
+      const el = document.getElementById('vis');
+      vegaEmbed("#vis", spec, embedOpt)
+        .catch(error => showError(el, error));
+    })(vegaEmbed);
+
+  </script>
+</body>
+</html>
