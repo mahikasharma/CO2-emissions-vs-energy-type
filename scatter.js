@@ -1,8 +1,6 @@
 // scatter.js
 // D3 scatter plot: Renewable Energy Share vs CO2 Emissions
-// Interactions: region dropdown (defaults to Northeast), hover tooltip, brush + mini bar chart
-// Call initScatter("#scatter-container") after DOM is ready
-// Expects eia_data.csv in the same directory
+// region dropdown (defaults to Northeast), hover tooltip, brush + mini bar chart
 
 const CSV_PATH = "eia_data.csv";
 
