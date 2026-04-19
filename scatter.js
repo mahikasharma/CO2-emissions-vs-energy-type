@@ -304,7 +304,7 @@ function initScatter(containerSelector) {
         .attr("opacity", d => {
           const regionOk = d.region === region;
           const brushOk  = brushedStates === null || brushedStates.has(d.state + d.year);
-          if (!regionOk) return 0.04;
+          if (!regionOk) return 0;
           return brushOk ? 0.85 : 0.08;
         });
     }
