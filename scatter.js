@@ -217,9 +217,9 @@ function initScatter(containerSelector) {
         .attr("cy", d => yScale(d.co2))
         .attr("r", 3.5)
         .attr("fill",         d => REGION_COLORS[d.region])
-        .attr("fill-opacity", 0.6)
+        .attr("fill-opacity", 1)
         .attr("stroke",       d => REGION_COLORS[d.region])
-        .attr("stroke-width", 0.5)
+        .attr("stroke-width", 0)
         .style("cursor","pointer");
 
     // ── State ─────────────────────────────────────────────────────────────
