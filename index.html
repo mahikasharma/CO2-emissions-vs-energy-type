@@ -3,8 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Air Quality vs. Economic Activity in the U.S.</title>
-    <link href="style.css" rel="stylesheet" />
+    <title>Carbon Dioxide Emission vs. Energy Types</title>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Source+Sans+3:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        background-color: #e8f0e9;
+        font-family: 'Source Sans 3', sans-serif;
+        font-size: 16px;
+        line-height: 1.75;
+        color: #1e2e21;
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 0 32px 64px;
+      }
+
+      h1 {
+        font-family: 'Lora', serif;
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1a4d2e;
+        padding-top: 48px;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #4a9a6e;
+        margin-bottom: 32px;
+      }
+
+      h3 {
+        font-family: 'Lora', serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #1a4d2e;
+        margin-top: 48px;
+        margin-bottom: 14px;
+        padding-left: 12px;
+        border-left: 4px solid #4a9a6e;
+      }
+
+      p {
+        margin-bottom: 16px;
+        color: #2c3e2f;
+      }
+
+      strong { color: #1a4d2e; }
+
+      a { color: #2d7a4f; text-decoration: underline; text-underline-offset: 3px; }
+      a:hover { color: #1a4d2e; }
+
+      /* Table */
+      .center { text-align: center; }
+
+      table.tg {
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 680px;
+        margin: 16px auto 24px;
+        background: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+      }
+      table.tg th {
+        background: #2d7a4f;
+        color: #ffffff;
+        font-family: 'Source Sans 3', sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 10px 16px;
+        text-align: left;
+        letter-spacing: 0.03em;
+      }
+      table.tg td {
+        padding: 9px 16px;
+        font-size: 0.88rem;
+        border-bottom: 1px solid #d4e8da;
+        color: #2c3e2f;
+        text-align: left;
+      }
+      table.tg tr:last-child td { border-bottom: none; }
+      table.tg tr:nth-child(even) td { background: #f2f8f4; }
+
+      /* iframes */
+      iframe {
+        border-radius: 10px;
+        box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+        display: block;
+        margin: 16px auto;
+      }
+
+      /* Side-by-side layout */
+      .container {
+        display: flex;
+        gap: 24px;
+        align-items: flex-start;
+        margin-bottom: 24px;
+      }
+      .container .image { flex: 1.4; }
+      .container .text  { flex: 1; }
+
+      /* Footer */
+      p:last-of-type {
+        margin-top: 48px;
+        padding-top: 20px;
+        border-top: 1px solid #c2d9c8;
+        font-size: 0.88rem;
+        color: #4a6650;
+      }
+    </style>
 </head>
 <body>
 
@@ -143,8 +249,7 @@
 
     <h3>Energy Mix by Region</h3>
 
-    <p>The stacked bar chart below shows the share of each energy source across the four U.S. regions.
-    g</p>
+    <p>The stacked bar chart below shows the share of each energy source across the four U.S. regions.</p>
 
     <div class="center">
         <iframe src="stacked_bar.html" width="95%" height="580px" frameborder="0" scrolling="no"></iframe>
@@ -175,7 +280,7 @@
         how economic activity shapes the air Americans breathe.
     </p>
 
-    <p>If you are have any further questions about this project, please contact us at:
+    <p>If you have any further questions about this project, please contact us at:
         Mahika Sharma (<a href="mailto:sharma.mahik@northeastern.edu">sharma.mahik@northeastern.edu</a>),
         Kiswa Khan (<a href="mailto:khan.ki@northeastern.edu">khan.ki@northeastern.edu</a>),
         Neha Maan (<a href="mailto:maan.n@northeastern.edu">maan.n@northeastern.edu</a>)
