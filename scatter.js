@@ -1,6 +1,6 @@
 // scatter.js
 // D3 scatter plot: Renewable Energy Share vs CO2 Emissions
-// Interactions: multi-select region filter buttons, hover tooltip, brush + mini bar chart
+// Interactions: multi-select region filter buttons, hover tooltip, brush selection
 
 const CSV_PATH = "eia_data.csv";
 
@@ -19,7 +19,6 @@ const REGION_MAP = {
 
 const REGIONS = ["Northeast", "South", "Midwest", "West"];
 
-// Four distinct dark shades of green, one per region
 const REGION_COLORS = {
   Northeast: "#0d3b24",
   South:     "#1a5c38",
@@ -59,14 +58,10 @@ function initScatter(containerSelector) {
   const frameEl  = window.frameElement;
   const frameH   = frameEl ? frameEl.getBoundingClientRect().height : null;
   const totalH   = frameH
-    ? Math.max(360, Math.min(desiredH, Math.round(frameH - 220)))
+    ? Math.max(360, Math.min(desiredH, Math.round(frameH - 120)))
     : desiredH;
   const innerW   = totalW - margin.left - margin.right;
   const innerH   = totalH - margin.top  - margin.bottom;
-
-  // Bar chart to be tall enough for title + axes + bars
-  const barH      = 300;
-  const barMargin = { top: 36, right: 24, bottom: 70, left: 68 };
 
   container.innerHTML = `
     <div class="scatter-controls" id="scatter-legend" style="margin-bottom:12px;"></div>
@@ -76,12 +71,6 @@ function initScatter(containerSelector) {
          style="display:block;max-width:100%;background:#ffffff;border-radius:6px;"></svg>
     <div class="scatter-brush-info" id="scatter-brush-info">
       Drag on the chart to select a group of points
-    </div>
-    <div id="scatter-bar-wrap" style="display:none;margin-top:12px;">
-      <svg id="scatter-bar-svg"
-           width="${totalW}" height="${barH}"
-           viewBox="0 0 ${totalW} ${barH}"
-           style="display:block;max-width:100%;background:#ffffff;border-radius:6px;"></svg>
     </div>
   `;
 
@@ -197,7 +186,7 @@ function initScatter(containerSelector) {
       .attr("text-anchor","middle")
       .text("CO2 Emissions (Million Metric Tons)");
 
-    // One regression line per region, stored by region key
+    // One regression line per region
     const regLines = {};
     REGIONS.forEach(r => {
       regLines[r] = g.append("line")
@@ -207,10 +196,9 @@ function initScatter(containerSelector) {
         .attr("opacity", 0);
     });
 
-    // Dots layer
+    // Dots
     const dotsG = g.append("g").attr("class","scatter-dots");
 
-    // Draw all dots once
     dotsG.selectAll("circle")
       .data(rows, d => d.state + d.year)
       .join("circle")
@@ -224,10 +212,10 @@ function initScatter(containerSelector) {
         .style("cursor","pointer");
 
     // ── State ─────────────────────────────────────────────────────────────
-    let activeRegions = new Set(["Northeast"]); // default: Northeast only
+    let activeRegions = new Set(["Northeast"]);
     let brushedStates = null;
 
-    // ── Multi-select filter buttons ───────────────────────────────────────
+    // ── Filter buttons ────────────────────────────────────────────────────
     const legendEl = d3.select("#scatter-legend");
 
     legendEl.append("span")
@@ -243,7 +231,7 @@ function initScatter(containerSelector) {
         .on("click", function() {
           const reg = this.dataset.region;
           if (activeRegions.has(reg)) {
-            if (activeRegions.size === 1) return; // keep at least one
+            if (activeRegions.size === 1) return;
             activeRegions.delete(reg);
             d3.select(this)
               .classed("scatter-legend-btn--active", false)
@@ -267,7 +255,6 @@ function initScatter(containerSelector) {
       btn.append("span").text(r);
     });
 
-    // Reset button
     legendEl.append("button")
       .attr("class","scatter-reset-btn")
       .style("margin-left","12px")
@@ -327,102 +314,12 @@ function initScatter(containerSelector) {
       });
     }
 
-    // ── Brush bar chart ───────────────────────────────────────────────────
-    function updateBrushBar(sel) {
-      const barWrap = document.getElementById("scatter-bar-wrap");
-      const barSvg  = d3.select("#scatter-bar-svg");
-      barSvg.selectAll("*").remove();
-
-      if (!sel || sel.length === 0) {
-        barWrap.style.display = "none";
-        return;
-      }
-      barWrap.style.display = "block";
-
-      barSvg.append("rect")
-        .attr("width", totalW).attr("height", barH).attr("fill","#ffffff");
-
-      const counts = REGIONS.map(r => ({
-        region: r,
-        count:  sel.filter(d => d.region === r).length
-      }));
-
-      const bw = totalW - barMargin.left - barMargin.right;
-      const bh = barH   - barMargin.top  - barMargin.bottom;
-      const bg = barSvg.append("g")
-        .attr("transform",`translate(${barMargin.left},${barMargin.top})`);
-
-      const xB = d3.scaleBand().domain(REGIONS).range([0, bw]).padding(0.35);
-      const yB = d3.scaleLinear()
-        .domain([0, d3.max(counts, d => d.count) * 1.2 || 1]).nice()
-        .range([bh, 0]);
-
-      // Grid
-      bg.append("g").attr("class","scatter-grid")
-        .call(d3.axisLeft(yB).ticks(4).tickSize(-bw).tickFormat(""))
-        .call(ax => ax.select(".domain").remove());
-
-      // Bars
-      bg.selectAll("rect.bar")
-        .data(counts)
-        .join("rect")
-          .attr("class","bar")
-          .attr("x",      d => xB(d.region))
-          .attr("y",      d => yB(d.count))
-          .attr("width",  xB.bandwidth())
-          .attr("height", d => bh - yB(d.count))
-          .attr("fill",   d => REGION_COLORS[d.region])
-          .attr("opacity", d => activeRegions.has(d.region) ? 0.85 : 0.15)
-          .attr("rx", 3);
-
-      // Count labels
-      bg.selectAll(".bar-label")
-        .data(counts)
-        .join("text")
-          .attr("class","bar-label")
-          .attr("x", d => xB(d.region) + xB.bandwidth() / 2)
-          .attr("y", d => yB(d.count) - 5)
-          .attr("text-anchor","middle")
-          .style("font-size","11px")
-          .style("fill","#1a1714")
-          .style("font-weight","500")
-          .text(d => d.count > 0 ? d.count : "");
-
-      // X axis
-      bg.append("g").attr("class","scatter-axis")
-        .attr("transform",`translate(0,${bh})`)
-        .call(d3.axisBottom(xB).tickSize(0))
-        .call(ax => ax.select(".domain").remove());
-
-      // Y axis
-      bg.append("g").attr("class","scatter-axis")
-        .call(d3.axisLeft(yB).ticks(4));
-
-      // Y axis label
-      barSvg.append("text").attr("class","scatter-axis-label")
-        .attr("transform","rotate(-90)")
-        .attr("x", -(barMargin.top + bh / 2))
-        .attr("y", 16)
-        .attr("text-anchor","middle")
-        .text("# Points Selected");
-
-      // Title — placed at top with enough clearance from y-axis label
-      barSvg.append("text").attr("class","scatter-axis-label")
-        .attr("x", barMargin.left + bw / 2)
-        .attr("y", 20)
-        .attr("text-anchor","middle")
-        .style("font-weight","600")
-        .style("font-size","12px")
-        .text("Selected Points by Region");
-    }
-
     // ── Brush ─────────────────────────────────────────────────────────────
     function setBrushInfo(selection) {
       const el = document.getElementById("scatter-brush-info");
       if (!selection) {
         brushedStates = null;
         el.innerHTML = "Drag on the chart to select a group of points";
-        updateBrushBar(null);
         return;
       }
       const [[x0,y0],[x1,y1]] = selection;
@@ -434,7 +331,6 @@ function initScatter(containerSelector) {
       if (sel.length === 0) {
         brushedStates = null;
         el.innerHTML = "No points in selection — try a different area";
-        updateBrushBar(null);
       } else {
         brushedStates = new Set(sel.map(d => d.state + d.year));
         const avgR   = d3.mean(sel, d => d.renewPct);
@@ -445,7 +341,6 @@ function initScatter(containerSelector) {
           ` (${states.length} state${states.length>1?"s":""}: ${states.join(", ")}) &nbsp;·&nbsp; ` +
           `Avg renewable share <strong>${avgR.toFixed(1)}%</strong> &nbsp;·&nbsp; ` +
           `Avg CO2 <strong>${d3.format(",.0f")(avgC)} mil. Mt</strong>`;
-        updateBrushBar(sel);
       }
       applyVisibility();
     }
