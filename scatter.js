@@ -1,6 +1,6 @@
 // scatter.js
 // D3 scatter plot: Renewable Energy Share vs CO2 Emissions
-// region filter buttons (defaults to Northeast), hover tooltip, brush + mini bar chart
+// Interactions: multi-select region filter buttons, hover tooltip, brush + mini bar chart
 
 const CSV_PATH = "eia_data.csv";
 
@@ -18,7 +18,14 @@ const REGION_MAP = {
 };
 
 const REGIONS = ["Northeast", "South", "Midwest", "West"];
-const GREEN   = "#4a9a6e";
+
+// Four distinct dark shades of green, one per region
+const REGION_COLORS = {
+  Northeast: "#0d3b24",
+  South:     "#1a5c38",
+  Midwest:   "#2d7a4f",
+  West:      "#4a9a6e"
+};
 
 function getDominantSource(row) {
   const sources = {
@@ -57,9 +64,9 @@ function initScatter(containerSelector) {
   const innerW   = totalW - margin.left - margin.right;
   const innerH   = totalH - margin.top  - margin.bottom;
 
-  // Mini bar chart is taller and with enough margin so axes are fully visible
-  const barH      = 200;
-  const barMargin = { top: 28, right: 24, bottom: 48, left: 68 };
+  // Bar chart — tall enough for title + axes + bars
+  const barH      = 220;
+  const barMargin = { top: 36, right: 24, bottom: 50, left: 68 };
 
   container.innerHTML = `
     <div class="scatter-controls" id="scatter-legend" style="margin-bottom:12px;"></div>
@@ -97,7 +104,7 @@ function initScatter(containerSelector) {
   const showTT = (event, d) => {
     document.getElementById("stt-state").textContent  = d.state;
     document.getElementById("stt-region").textContent = d.region;
-    document.getElementById("stt-region").style.color = GREEN;
+    document.getElementById("stt-region").style.color = REGION_COLORS[d.region];
     document.getElementById("stt-year").textContent   = d.year;
     document.getElementById("stt-renew").textContent  = d.renewPct.toFixed(1) + "%";
     document.getElementById("stt-co2").textContent    = d3.format(",")(Math.round(d.co2));
@@ -167,7 +174,6 @@ function initScatter(containerSelector) {
     g.append("g").attr("class","scatter-grid")
       .call(d3.axisLeft(yScale).tickSize(-innerW).tickFormat(""))
       .call(ax => ax.select(".domain").remove());
-
     g.append("g").attr("class","scatter-grid")
       .attr("transform",`translate(0,${innerH})`)
       .call(d3.axisBottom(xScale).tickSize(-innerH).tickFormat(""))
@@ -177,7 +183,6 @@ function initScatter(containerSelector) {
     g.append("g").attr("class","scatter-axis")
       .attr("transform",`translate(0,${innerH})`)
       .call(d3.axisBottom(xScale).ticks(7).tickFormat(v => v.toFixed(0) + "%"));
-
     g.append("g").attr("class","scatter-axis")
       .call(d3.axisLeft(yScale).ticks(6).tickFormat(fmt));
 
@@ -186,28 +191,43 @@ function initScatter(containerSelector) {
       .attr("x", margin.left + innerW / 2).attr("y", totalH - 10)
       .attr("text-anchor","middle")
       .text("Renewable Energy Share (% of Total Consumption)");
-
     svg.append("text").attr("class","scatter-axis-label")
       .attr("transform","rotate(-90)")
       .attr("x", -(margin.top + innerH / 2)).attr("y", 16)
       .attr("text-anchor","middle")
       .text("CO2 Emissions (Million Metric Tons)");
 
-    // Regression line
-    const regLine = g.append("line")
-      .attr("class","scatter-reg-line")
-      .attr("stroke", GREEN)
-      .attr("stroke-width", 2.2)
-      .attr("stroke-dasharray", "7 4")
-      .attr("opacity", 0);
+    // One regression line per region, stored by region key
+    const regLines = {};
+    REGIONS.forEach(r => {
+      regLines[r] = g.append("line")
+        .attr("stroke", REGION_COLORS[r])
+        .attr("stroke-width", 2)
+        .attr("stroke-dasharray", "7 4")
+        .attr("opacity", 0);
+    });
 
     // Dots layer
     const dotsG = g.append("g").attr("class","scatter-dots");
 
-    let brushedStates  = null;
-    let activeRegion   = "Northeast"; 
+    // Draw all dots once
+    dotsG.selectAll("circle")
+      .data(rows, d => d.state + d.year)
+      .join("circle")
+        .attr("cx", d => xScale(d.renewPct))
+        .attr("cy", d => yScale(d.co2))
+        .attr("r", 3.5)
+        .attr("fill",         d => REGION_COLORS[d.region])
+        .attr("fill-opacity", 0.6)
+        .attr("stroke",       d => REGION_COLORS[d.region])
+        .attr("stroke-width", 0.5)
+        .style("cursor","pointer");
 
-    // filter buttons
+    // ── State ─────────────────────────────────────────────────────────────
+    let activeRegions = new Set(["Northeast"]); // default: Northeast only
+    let brushedStates = null;
+
+    // ── Multi-select filter buttons ───────────────────────────────────────
     const legendEl = d3.select("#scatter-legend");
 
     legendEl.append("span")
@@ -217,110 +237,97 @@ function initScatter(containerSelector) {
 
     REGIONS.forEach(r => {
       const btn = legendEl.append("button")
-        .attr("class", "scatter-legend-btn" + (r === "Northeast" ? " scatter-legend-btn--active" : " scatter-legend-btn--dimmed"))
+        .attr("class", "scatter-legend-btn" +
+          (r === "Northeast" ? " scatter-legend-btn--active" : " scatter-legend-btn--dimmed"))
         .attr("data-region", r)
         .on("click", function() {
           const reg = this.dataset.region;
-          // deselect all, select clicked
-          d3.selectAll(".scatter-legend-btn")
-            .classed("scatter-legend-btn--active", false)
-            .classed("scatter-legend-btn--dimmed", true);
-          d3.select(this)
-            .classed("scatter-legend-btn--active", true)
-            .classed("scatter-legend-btn--dimmed", false);
-
-          activeRegion = reg;
+          if (activeRegions.has(reg)) {
+            if (activeRegions.size === 1) return; // keep at least one
+            activeRegions.delete(reg);
+            d3.select(this)
+              .classed("scatter-legend-btn--active", false)
+              .classed("scatter-legend-btn--dimmed", true);
+          } else {
+            activeRegions.add(reg);
+            d3.select(this)
+              .classed("scatter-legend-btn--active", true)
+              .classed("scatter-legend-btn--dimmed", false);
+          }
           brushedStates = null;
           brushLayer.call(brush.move, null);
           setBrushInfo(null);
-          update(reg);
+          applyVisibility();
+          updateRegLines();
         });
 
       btn.append("span")
         .attr("class","scatter-swatch")
-        .style("background", GREEN)
-        .style("opacity", r === "Northeast" ? "1" : "0.35");
+        .style("background", REGION_COLORS[r]);
       btn.append("span").text(r);
     });
 
-    // Reset brush button
+    // Reset button
     legendEl.append("button")
       .attr("class","scatter-reset-btn")
       .style("margin-left","12px")
-      .text("Reset brush")
+      .text("Reset")
       .on("click", () => {
-        brushLayer.call(brush.move, null);
+        activeRegions = new Set(["Northeast"]);
+        d3.selectAll(".scatter-legend-btn")
+          .classed("scatter-legend-btn--active", false)
+          .classed("scatter-legend-btn--dimmed", true);
+        d3.select("[data-region='Northeast']")
+          .classed("scatter-legend-btn--active", true)
+          .classed("scatter-legend-btn--dimmed", false);
         brushedStates = null;
+        brushLayer.call(brush.move, null);
         setBrushInfo(null);
-        applyVisibility(activeRegion);
+        applyVisibility();
+        updateRegLines();
       });
 
-    // Update chart for a region 
-    function update(region) {
-      const regionRows = rows.filter(d => d.region === region);
+    // Tooltip events
+    dotsG.selectAll("circle")
+      .on("mousemove", function(event, d) {
+        if (!activeRegions.has(d.region)) return;
+        if (brushedStates !== null && !brushedStates.has(d.state + d.year)) return;
+        showTT(event, d);
+      })
+      .on("mouseleave", hideTT);
 
-      dotsG.selectAll("circle").data(rows, d => d.state + d.year)
-        .join(
-          enter => enter.append("circle")
-            .attr("cx", d => xScale(d.renewPct))
-            .attr("cy", d => yScale(d.co2))
-            .attr("r", 3.5)
-            .attr("fill", GREEN)
-            .attr("fill-opacity", 0.55)
-            .attr("stroke", GREEN)
-            .attr("stroke-width", 0.5)
-            .attr("stroke-opacity", 0.4)
-            .style("cursor","pointer"),
-          upd => upd
-            .attr("cx", d => xScale(d.renewPct))
-            .attr("cy", d => yScale(d.co2))
-        );
-
-      applyVisibility(region);
-
+    function applyVisibility() {
       dotsG.selectAll("circle")
-        .on("mousemove", function(event, d) {
-          if (d.region !== region) return;
-          if (brushedStates !== null && !brushedStates.has(d.state + d.year)) return;
-          showTT(event, d);
-        })
-        .on("mouseleave", hideTT);
+        .attr("opacity", d => {
+          const rOk = activeRegions.has(d.region);
+          const bOk = brushedStates === null || brushedStates.has(d.state + d.year);
+          if (!rOk) return 0;
+          return bOk ? 0.85 : 0.08;
+        });
+    }
 
-      // Update regression line
-      const reg = linearRegression(regionRows, d => d.renewPct, d => d.co2);
-      if (reg && regionRows.length >= 2) {
+    function updateRegLines() {
+      REGIONS.forEach(r => {
+        if (!activeRegions.has(r)) {
+          regLines[r].attr("opacity", 0);
+          return;
+        }
+        const regionRows = rows.filter(d => d.region === r);
+        const reg = linearRegression(regionRows, d => d.renewPct, d => d.co2);
+        if (!reg || regionRows.length < 2) { regLines[r].attr("opacity", 0); return; }
         const xMin  = d3.min(regionRows, d => d.renewPct);
         const xMax  = d3.max(regionRows, d => d.renewPct);
         const clamp = v => Math.max(0, Math.min(innerH, v));
-        regLine
+        regLines[r]
           .attr("x1", xScale(xMin))
           .attr("y1", clamp(yScale(reg.slope * xMin + reg.intercept)))
           .attr("x2", xScale(xMax))
           .attr("y2", clamp(yScale(reg.slope * xMax + reg.intercept)))
           .attr("opacity", 0.9);
-      } else {
-        regLine.attr("opacity", 0);
-      }
-
-      // Update swatch opacity to reflect active state
-      d3.selectAll(".scatter-swatch")
-        .style("opacity", function() {
-          const btnRegion = this.parentElement.dataset.region;
-          return btnRegion === region ? "1" : "0.35";
-        });
+      });
     }
 
-    function applyVisibility(region) {
-      dotsG.selectAll("circle")
-        .attr("opacity", d => {
-          const regionOk = d.region === region;
-          const brushOk  = brushedStates === null || brushedStates.has(d.state + d.year);
-          if (!regionOk) return 0;
-          return brushOk ? 0.85 : 0.08;
-        });
-    }
-
-    // Brush bar chart 
+    // ── Brush bar chart ───────────────────────────────────────────────────
     function updateBrushBar(sel) {
       const barWrap = document.getElementById("scatter-bar-wrap");
       const barSvg  = d3.select("#scatter-bar-svg");
@@ -330,7 +337,6 @@ function initScatter(containerSelector) {
         barWrap.style.display = "none";
         return;
       }
-
       barWrap.style.display = "block";
 
       barSvg.append("rect")
@@ -365,8 +371,8 @@ function initScatter(containerSelector) {
           .attr("y",      d => yB(d.count))
           .attr("width",  xB.bandwidth())
           .attr("height", d => bh - yB(d.count))
-          .attr("fill",   GREEN)
-          .attr("opacity", d => d.region === activeRegion ? 0.82 : 0.2)
+          .attr("fill",   d => REGION_COLORS[d.region])
+          .attr("opacity", d => activeRegions.has(d.region) ? 0.85 : 0.15)
           .attr("rx", 3);
 
       // Count labels
@@ -400,17 +406,17 @@ function initScatter(containerSelector) {
         .attr("text-anchor","middle")
         .text("# Points Selected");
 
-      // Title
+      // Title — placed at top with enough clearance from y-axis label
       barSvg.append("text").attr("class","scatter-axis-label")
         .attr("x", barMargin.left + bw / 2)
-        .attr("y", 16)
+        .attr("y", 20)
         .attr("text-anchor","middle")
         .style("font-weight","600")
         .style("font-size","12px")
         .text("Selected Points by Region");
     }
 
-    // Brush 
+    // ── Brush ─────────────────────────────────────────────────────────────
     function setBrushInfo(selection) {
       const el = document.getElementById("scatter-brush-info");
       if (!selection) {
@@ -423,7 +429,7 @@ function initScatter(containerSelector) {
       const sel = rows.filter(d => {
         const cx = xScale(d.renewPct), cy = yScale(d.co2);
         return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1
-               && d.region === activeRegion;
+               && activeRegions.has(d.region);
       });
       if (sel.length === 0) {
         brushedStates = null;
@@ -441,7 +447,7 @@ function initScatter(containerSelector) {
           `Avg CO2 <strong>${d3.format(",.0f")(avgC)} mil. Mt</strong>`;
         updateBrushBar(sel);
       }
-      applyVisibility(activeRegion);
+      applyVisibility();
     }
 
     const brush = d3.brush()
@@ -453,12 +459,13 @@ function initScatter(containerSelector) {
 
     brushLayer.select(".selection")
       .style("fill",         "rgba(74,154,110,0.10)")
-      .style("stroke",       GREEN)
+      .style("stroke",       "#2d7a4f")
       .style("stroke-width", "1.5");
 
     brushLayer.on("mousedown.tt", hideTT);
 
-    // Initial render to default to Northeast
-    update("Northeast");
+    // Initial render
+    applyVisibility();
+    updateRegLines();
   }
 }
