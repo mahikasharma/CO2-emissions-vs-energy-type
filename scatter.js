@@ -64,9 +64,9 @@ function initScatter(containerSelector) {
   const innerW   = totalW - margin.left - margin.right;
   const innerH   = totalH - margin.top  - margin.bottom;
 
-  // Bar chart — tall enough for title + axes + bars
-  const barH      = 220;
-  const barMargin = { top: 36, right: 24, bottom: 50, left: 68 };
+  // Bar chart to be tall enough for title + axes + bars
+  const barH      = 300;
+  const barMargin = { top: 36, right: 24, bottom: 70, left: 68 };
 
   container.innerHTML = `
     <div class="scatter-controls" id="scatter-legend" style="margin-bottom:12px;"></div>
