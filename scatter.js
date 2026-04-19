@@ -1,7 +1,5 @@
 // scatter.js
 // D3 scatter plot: Renewable Energy Share vs CO2 Emissions
-// Interactions: multi-select region filter buttons, hover tooltip,
-//               brush selection (updates regression line for selected points)
 
 const CSV_PATH = "eia_data.csv";
 
@@ -20,7 +18,7 @@ const REGION_MAP = {
 
 const REGIONS = ["Northeast", "South", "Midwest", "West"];
 
-// Vibrant, clearly distinct greens
+// clearly distinct greens
 const REGION_COLORS = {
   Northeast: "#1a7a4a",
   South:     "#0d4f2e",
@@ -188,19 +186,18 @@ function initScatter(containerSelector) {
       .attr("text-anchor","middle")
       .text("CO2 Emissions (Million Metric Tons)");
 
-    // ── Two lines per region: full-data (solid) + brushed (dashed) ────────
-    const fullRegLines    = {};  // shown always when region active
-    const brushedRegLines = {};  // shown only when brush is active
+
+    const fullRegLines    = {};  
+    const brushedRegLines = {};  
 
     REGIONS.forEach(r => {
-      // Full-data line: solid, slightly transparent
       fullRegLines[r] = g.append("line")
         .attr("stroke", REGION_COLORS[r])
         .attr("stroke-width", 1.5)
         .attr("stroke-dasharray", "5 3")
         .attr("opacity", 0);
 
-      // Brushed line: thicker solid, fully opaque
+
       brushedRegLines[r] = g.append("line")
         .attr("stroke", REGION_COLORS[r])
         .attr("stroke-width", 3)
@@ -222,11 +219,11 @@ function initScatter(containerSelector) {
         .attr("stroke-width", 0)
         .style("cursor","pointer");
 
-    // ── State ─────────────────────────────────────────────────────────────
+    // state
     let activeRegions = new Set(["Northeast"]);
     let brushedStates = null;
 
-    // ── Filter buttons ────────────────────────────────────────────────────
+    // filter buttons
     const legendEl = d3.select("#scatter-legend");
 
     legendEl.append("span")
@@ -338,7 +335,7 @@ function initScatter(containerSelector) {
       REGIONS.forEach(r => brushedRegLines[r].attr("opacity", 0));
     }
 
-    // Helper: compute and position a regression line element
+    // compute and position a regression line element
     function drawLine(lineEl, data, opacity) {
       const reg = linearRegression(data, d => d.renewPct, d => d.co2);
       if (!reg || data.length < 2) { lineEl.attr("opacity", 0); return; }
@@ -353,7 +350,7 @@ function initScatter(containerSelector) {
         .attr("opacity", opacity);
     }
 
-    // ── Brush ─────────────────────────────────────────────────────────────
+    // brush
     function setBrushInfo(selection) {
       const el = document.getElementById("scatter-brush-info");
       if (!selection) {
