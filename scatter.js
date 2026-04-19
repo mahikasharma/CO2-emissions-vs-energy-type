@@ -1,6 +1,6 @@
 // scatter.js
 // D3 scatter plot: Renewable Energy Share vs CO2 Emissions
-// region dropdown (defaults to Northeast), hover tooltip, brush + mini bar chart
+// region filter buttons (defaults to Northeast), hover tooltip, brush + mini bar chart
 
 const CSV_PATH = "eia_data.csv";
 
@@ -18,7 +18,7 @@ const REGION_MAP = {
 };
 
 const REGIONS = ["Northeast", "South", "Midwest", "West"];
-const GREEN   = "#4a9a6e"; 
+const GREEN   = "#4a9a6e";
 
 function getDominantSource(row) {
   const sources = {
@@ -46,19 +46,20 @@ function initScatter(containerSelector) {
   const container = document.querySelector(containerSelector);
   if (!container) { console.error("scatter: container not found:", containerSelector); return; }
 
-  const margin  = { top: 24, right: 30, bottom: 60, left: 76 };
-  const totalW  = container.clientWidth || 860;
+  const margin   = { top: 24, right: 30, bottom: 60, left: 76 };
+  const totalW   = container.clientWidth || 860;
   const desiredH = Math.round(totalW * 0.56);
   const frameEl  = window.frameElement;
   const frameH   = frameEl ? frameEl.getBoundingClientRect().height : null;
   const totalH   = frameH
-    ? Math.max(360, Math.min(desiredH, Math.round(frameH - 180)))
+    ? Math.max(360, Math.min(desiredH, Math.round(frameH - 220)))
     : desiredH;
-  const innerW  = totalW - margin.left - margin.right;
-  const innerH  = totalH - margin.top  - margin.bottom;
+  const innerW   = totalW - margin.left - margin.right;
+  const innerH   = totalH - margin.top  - margin.bottom;
 
-  const barH      = 150;
-  const barMargin = { top: 20, right: 20, bottom: 36, left: 60 };
+  // Mini bar chart is taller and with enough margin so axes are fully visible
+  const barH      = 200;
+  const barMargin = { top: 28, right: 24, bottom: 48, left: 68 };
 
   container.innerHTML = `
     <div class="scatter-controls" id="scatter-legend" style="margin-bottom:12px;"></div>
@@ -69,8 +70,9 @@ function initScatter(containerSelector) {
     <div class="scatter-brush-info" id="scatter-brush-info">
       Drag on the chart to select a group of points
     </div>
-    <div id="scatter-bar-wrap" style="display:none;margin-top:8px;">
-      <svg id="scatter-bar-svg" width="${totalW}" height="${barH}"
+    <div id="scatter-bar-wrap" style="display:none;margin-top:12px;">
+      <svg id="scatter-bar-svg"
+           width="${totalW}" height="${barH}"
            viewBox="0 0 ${totalW} ${barH}"
            style="display:block;max-width:100%;background:#ffffff;border-radius:6px;"></svg>
     </div>
@@ -145,14 +147,12 @@ function initScatter(containerSelector) {
   function renderChart(rows) {
     const svg = d3.select("#scatter-svg");
 
-    // White background rect (belt-and-suspenders)
     svg.append("rect")
       .attr("width", totalW).attr("height", totalH)
       .attr("fill", "#ffffff");
 
     const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Scales over full dataset so axes don't jump when switching regions
     const xScale = d3.scaleLinear()
       .domain([0, d3.max(rows, d => d.renewPct) * 1.06]).nice()
       .range([0, innerW]);
@@ -193,45 +193,57 @@ function initScatter(containerSelector) {
       .attr("text-anchor","middle")
       .text("CO2 Emissions (Million Metric Tons)");
 
-    // Regression line (one, updated on region change)
+    // Regression line
     const regLine = g.append("line")
       .attr("class","scatter-reg-line")
       .attr("stroke", GREEN)
       .attr("stroke-width", 2.2)
       .attr("stroke-dasharray", "7 4")
-      .attr("opacity", 0.9);
+      .attr("opacity", 0);
 
     // Dots layer
     const dotsG = g.append("g").attr("class","scatter-dots");
 
-    // Brush layer added after dots
-    let brushedStates = null;
+    let brushedStates  = null;
+    let activeRegion   = "Northeast"; 
 
-    // Dropdown
+    // filter buttons
     const legendEl = d3.select("#scatter-legend");
 
-    legendEl.append("label")
-      .attr("for","region-dropdown")
+    legendEl.append("span")
       .attr("class","scatter-legend-label")
       .style("margin-right","8px")
-      .text("Select Region:");
-
-    const dropdown = legendEl.append("select")
-      .attr("id","region-dropdown")
-      .attr("class","scatter-dropdown")
-      .style("padding","4px 10px")
-      .style("border-radius","16px")
-      .style("border","1.5px solid #d0ccc6")
-      .style("font-family","sans-serif")
-      .style("font-size","0.82rem")
-      .style("cursor","pointer")
-      .style("background","#fff");
+      .text("Filter:");
 
     REGIONS.forEach(r => {
-      dropdown.append("option").attr("value", r).text(r);
+      const btn = legendEl.append("button")
+        .attr("class", "scatter-legend-btn" + (r === "Northeast" ? " scatter-legend-btn--active" : " scatter-legend-btn--dimmed"))
+        .attr("data-region", r)
+        .on("click", function() {
+          const reg = this.dataset.region;
+          // deselect all, select clicked
+          d3.selectAll(".scatter-legend-btn")
+            .classed("scatter-legend-btn--active", false)
+            .classed("scatter-legend-btn--dimmed", true);
+          d3.select(this)
+            .classed("scatter-legend-btn--active", true)
+            .classed("scatter-legend-btn--dimmed", false);
+
+          activeRegion = reg;
+          brushedStates = null;
+          brushLayer.call(brush.move, null);
+          setBrushInfo(null);
+          update(reg);
+        });
+
+      btn.append("span")
+        .attr("class","scatter-swatch")
+        .style("background", GREEN)
+        .style("opacity", r === "Northeast" ? "1" : "0.35");
+      btn.append("span").text(r);
     });
 
-    // Reset button
+    // Reset brush button
     legendEl.append("button")
       .attr("class","scatter-reset-btn")
       .style("margin-left","12px")
@@ -240,40 +252,32 @@ function initScatter(containerSelector) {
         brushLayer.call(brush.move, null);
         brushedStates = null;
         setBrushInfo(null);
-        applyVisibility(currentRegion());
+        applyVisibility(activeRegion);
       });
 
-    function currentRegion() {
-      return document.getElementById("region-dropdown").value;
-    }
-
-    // Draw / update for a given region
+    // Update chart for a region 
     function update(region) {
       const regionRows = rows.filter(d => d.region === region);
 
-      // Update dots join on full rows but control opacity
-      const dots = dotsG.selectAll("circle").data(rows, d => d.state + d.year);
+      dotsG.selectAll("circle").data(rows, d => d.state + d.year)
+        .join(
+          enter => enter.append("circle")
+            .attr("cx", d => xScale(d.renewPct))
+            .attr("cy", d => yScale(d.co2))
+            .attr("r", 3.5)
+            .attr("fill", GREEN)
+            .attr("fill-opacity", 0.55)
+            .attr("stroke", GREEN)
+            .attr("stroke-width", 0.5)
+            .attr("stroke-opacity", 0.4)
+            .style("cursor","pointer"),
+          upd => upd
+            .attr("cx", d => xScale(d.renewPct))
+            .attr("cy", d => yScale(d.co2))
+        );
 
-      dots.join(
-        enter => enter.append("circle")
-          .attr("cx", d => xScale(d.renewPct))
-          .attr("cy", d => yScale(d.co2))
-          .attr("r", 3.5)
-          .attr("fill", GREEN)
-          .attr("fill-opacity", 0.55)
-          .attr("stroke", GREEN)
-          .attr("stroke-width", 0.5)
-          .attr("stroke-opacity", 0.4)
-          .style("cursor","pointer"),
-        update => update
-          .attr("cx", d => xScale(d.renewPct))
-          .attr("cy", d => yScale(d.co2))
-      );
-
-      // Reapply visibility with new region
       applyVisibility(region);
 
-      // Tooltip events (re-bind after join)
       dotsG.selectAll("circle")
         .on("mousemove", function(event, d) {
           if (d.region !== region) return;
@@ -285,8 +289,8 @@ function initScatter(containerSelector) {
       // Update regression line
       const reg = linearRegression(regionRows, d => d.renewPct, d => d.co2);
       if (reg && regionRows.length >= 2) {
-        const xMin = d3.min(regionRows, d => d.renewPct);
-        const xMax = d3.max(regionRows, d => d.renewPct);
+        const xMin  = d3.min(regionRows, d => d.renewPct);
+        const xMax  = d3.max(regionRows, d => d.renewPct);
         const clamp = v => Math.max(0, Math.min(innerH, v));
         regLine
           .attr("x1", xScale(xMin))
@@ -297,6 +301,13 @@ function initScatter(containerSelector) {
       } else {
         regLine.attr("opacity", 0);
       }
+
+      // Update swatch opacity to reflect active state
+      d3.selectAll(".scatter-swatch")
+        .style("opacity", function() {
+          const btnRegion = this.parentElement.dataset.region;
+          return btnRegion === region ? "1" : "0.35";
+        });
     }
 
     function applyVisibility(region) {
@@ -309,15 +320,7 @@ function initScatter(containerSelector) {
         });
     }
 
-    // Dropdown change
-    dropdown.on("change", function() {
-      brushedStates = null;
-      brushLayer.call(brush.move, null);
-      setBrushInfo(null);
-      update(this.value);
-    });
-
-    // Brush bar chart
+    // Brush bar chart 
     function updateBrushBar(sel) {
       const barWrap = document.getElementById("scatter-bar-wrap");
       const barSvg  = d3.select("#scatter-bar-svg");
@@ -330,7 +333,6 @@ function initScatter(containerSelector) {
 
       barWrap.style.display = "block";
 
-      // White background
       barSvg.append("rect")
         .attr("width", totalW).attr("height", barH).attr("fill","#ffffff");
 
@@ -346,13 +348,15 @@ function initScatter(containerSelector) {
 
       const xB = d3.scaleBand().domain(REGIONS).range([0, bw]).padding(0.35);
       const yB = d3.scaleLinear()
-        .domain([0, d3.max(counts, d => d.count) * 1.15 || 1]).nice()
+        .domain([0, d3.max(counts, d => d.count) * 1.2 || 1]).nice()
         .range([bh, 0]);
 
+      // Grid
       bg.append("g").attr("class","scatter-grid")
         .call(d3.axisLeft(yB).ticks(4).tickSize(-bw).tickFormat(""))
         .call(ax => ax.select(".domain").remove());
 
+      // Bars
       bg.selectAll("rect.bar")
         .data(counts)
         .join("rect")
@@ -362,39 +366,47 @@ function initScatter(containerSelector) {
           .attr("width",  xB.bandwidth())
           .attr("height", d => bh - yB(d.count))
           .attr("fill",   GREEN)
-          .attr("opacity", d => d.region === currentRegion() ? 0.82 : 0.2)
+          .attr("opacity", d => d.region === activeRegion ? 0.82 : 0.2)
           .attr("rx", 3);
 
+      // Count labels
       bg.selectAll(".bar-label")
         .data(counts)
         .join("text")
           .attr("class","bar-label")
           .attr("x", d => xB(d.region) + xB.bandwidth() / 2)
-          .attr("y", d => yB(d.count) - 4)
+          .attr("y", d => yB(d.count) - 5)
           .attr("text-anchor","middle")
           .style("font-size","11px")
           .style("fill","#1a1714")
           .style("font-weight","500")
           .text(d => d.count > 0 ? d.count : "");
 
+      // X axis
       bg.append("g").attr("class","scatter-axis")
         .attr("transform",`translate(0,${bh})`)
         .call(d3.axisBottom(xB).tickSize(0))
         .call(ax => ax.select(".domain").remove());
 
+      // Y axis
       bg.append("g").attr("class","scatter-axis")
         .call(d3.axisLeft(yB).ticks(4));
 
+      // Y axis label
       barSvg.append("text").attr("class","scatter-axis-label")
         .attr("transform","rotate(-90)")
-        .attr("x", -(barMargin.top + bh / 2)).attr("y", 13)
+        .attr("x", -(barMargin.top + bh / 2))
+        .attr("y", 16)
         .attr("text-anchor","middle")
         .text("# Points Selected");
 
+      // Title
       barSvg.append("text").attr("class","scatter-axis-label")
-        .attr("x", barMargin.left + bw / 2).attr("y", 13)
+        .attr("x", barMargin.left + bw / 2)
+        .attr("y", 16)
         .attr("text-anchor","middle")
-        .style("font-weight","600").style("font-size","12px")
+        .style("font-weight","600")
+        .style("font-size","12px")
         .text("Selected Points by Region");
     }
 
@@ -408,11 +420,10 @@ function initScatter(containerSelector) {
         return;
       }
       const [[x0,y0],[x1,y1]] = selection;
-      const region = currentRegion();
       const sel = rows.filter(d => {
         const cx = xScale(d.renewPct), cy = yScale(d.co2);
         return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1
-               && d.region === region;
+               && d.region === activeRegion;
       });
       if (sel.length === 0) {
         brushedStates = null;
@@ -430,7 +441,7 @@ function initScatter(containerSelector) {
           `Avg CO2 <strong>${d3.format(",.0f")(avgC)} mil. Mt</strong>`;
         updateBrushBar(sel);
       }
-      applyVisibility(region);
+      applyVisibility(activeRegion);
     }
 
     const brush = d3.brush()
@@ -447,8 +458,7 @@ function initScatter(containerSelector) {
 
     brushLayer.on("mousedown.tt", hideTT);
 
-    // Initial render default to Northeast 
-    dropdown.property("value", "Northeast");
+    // Initial render to default to Northeast
     update("Northeast");
   }
 }
