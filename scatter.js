@@ -1,6 +1,7 @@
 // scatter.js
 // D3 scatter plot: Renewable Energy Share vs CO2 Emissions
-// Interactions: multi-select region filter buttons, hover tooltip, brush selection
+// Interactions: multi-select region filter buttons, hover tooltip,
+//               brush selection (updates regression line for selected points)
 
 const CSV_PATH = "eia_data.csv";
 
@@ -19,11 +20,12 @@ const REGION_MAP = {
 
 const REGIONS = ["Northeast", "South", "Midwest", "West"];
 
+// Vibrant, clearly distinct greens
 const REGION_COLORS = {
-  Northeast: "#0d3b24",
-  South:     "#1a5c38",
-  Midwest:   "#2d7a4f",
-  West:      "#4a9a6e"
+  Northeast: "#1a7a4a",
+  South:     "#0d4f2e",
+  Midwest:   "#5cb87a",
+  West:      "#a8d8a8"
 };
 
 function getDominantSource(row) {
@@ -70,7 +72,7 @@ function initScatter(containerSelector) {
          viewBox="0 0 ${totalW} ${totalH}"
          style="display:block;max-width:100%;background:#ffffff;border-radius:6px;"></svg>
     <div class="scatter-brush-info" id="scatter-brush-info">
-      Drag on the chart to select a group of points
+      Drag on the chart to select a group of points · Regression lines update to show trend of selected points
     </div>
   `;
 
@@ -186,13 +188,22 @@ function initScatter(containerSelector) {
       .attr("text-anchor","middle")
       .text("CO2 Emissions (Million Metric Tons)");
 
-    // One regression line per region
-    const regLines = {};
+    // ── Two lines per region: full-data (solid) + brushed (dashed) ────────
+    const fullRegLines    = {};  // shown always when region active
+    const brushedRegLines = {};  // shown only when brush is active
+
     REGIONS.forEach(r => {
-      regLines[r] = g.append("line")
+      // Full-data line: solid, slightly transparent
+      fullRegLines[r] = g.append("line")
         .attr("stroke", REGION_COLORS[r])
-        .attr("stroke-width", 2)
-        .attr("stroke-dasharray", "7 4")
+        .attr("stroke-width", 1.5)
+        .attr("stroke-dasharray", "5 3")
+        .attr("opacity", 0);
+
+      // Brushed line: thicker solid, fully opaque
+      brushedRegLines[r] = g.append("line")
+        .attr("stroke", REGION_COLORS[r])
+        .attr("stroke-width", 3)
         .attr("opacity", 0);
     });
 
@@ -246,7 +257,8 @@ function initScatter(containerSelector) {
           brushLayer.call(brush.move, null);
           setBrushInfo(null);
           applyVisibility();
-          updateRegLines();
+          updateFullRegLines();
+          clearBrushedRegLines();
         });
 
       btn.append("span")
@@ -271,7 +283,8 @@ function initScatter(containerSelector) {
         brushLayer.call(brush.move, null);
         setBrushInfo(null);
         applyVisibility();
-        updateRegLines();
+        updateFullRegLines();
+        clearBrushedRegLines();
       });
 
     // Tooltip events
@@ -293,25 +306,51 @@ function initScatter(containerSelector) {
         });
     }
 
-    function updateRegLines() {
+    // Draw full-data regression lines (dashed, shown when region is active)
+    function updateFullRegLines() {
       REGIONS.forEach(r => {
         if (!activeRegions.has(r)) {
-          regLines[r].attr("opacity", 0);
+          fullRegLines[r].attr("opacity", 0);
           return;
         }
         const regionRows = rows.filter(d => d.region === r);
-        const reg = linearRegression(regionRows, d => d.renewPct, d => d.co2);
-        if (!reg || regionRows.length < 2) { regLines[r].attr("opacity", 0); return; }
-        const xMin  = d3.min(regionRows, d => d.renewPct);
-        const xMax  = d3.max(regionRows, d => d.renewPct);
-        const clamp = v => Math.max(0, Math.min(innerH, v));
-        regLines[r]
-          .attr("x1", xScale(xMin))
-          .attr("y1", clamp(yScale(reg.slope * xMin + reg.intercept)))
-          .attr("x2", xScale(xMax))
-          .attr("y2", clamp(yScale(reg.slope * xMax + reg.intercept)))
-          .attr("opacity", 0.9);
+        drawLine(fullRegLines[r], regionRows, 0.5);
       });
+    }
+
+    // Draw brushed regression lines (solid, shown when brush is active)
+    function updateBrushedRegLines(brushedRows) {
+      REGIONS.forEach(r => {
+        if (!activeRegions.has(r)) {
+          brushedRegLines[r].attr("opacity", 0);
+          return;
+        }
+        const regionBrushed = brushedRows.filter(d => d.region === r);
+        if (regionBrushed.length < 2) {
+          brushedRegLines[r].attr("opacity", 0);
+          return;
+        }
+        drawLine(brushedRegLines[r], regionBrushed, 0.95);
+      });
+    }
+
+    function clearBrushedRegLines() {
+      REGIONS.forEach(r => brushedRegLines[r].attr("opacity", 0));
+    }
+
+    // Helper: compute and position a regression line element
+    function drawLine(lineEl, data, opacity) {
+      const reg = linearRegression(data, d => d.renewPct, d => d.co2);
+      if (!reg || data.length < 2) { lineEl.attr("opacity", 0); return; }
+      const xMin  = d3.min(data, d => d.renewPct);
+      const xMax  = d3.max(data, d => d.renewPct);
+      const clamp = v => Math.max(0, Math.min(innerH, v));
+      lineEl
+        .attr("x1", xScale(xMin))
+        .attr("y1", clamp(yScale(reg.slope * xMin + reg.intercept)))
+        .attr("x2", xScale(xMax))
+        .attr("y2", clamp(yScale(reg.slope * xMax + reg.intercept)))
+        .attr("opacity", opacity);
     }
 
     // ── Brush ─────────────────────────────────────────────────────────────
@@ -319,29 +358,47 @@ function initScatter(containerSelector) {
       const el = document.getElementById("scatter-brush-info");
       if (!selection) {
         brushedStates = null;
-        el.innerHTML = "Drag on the chart to select a group of points";
+        el.innerHTML = "Drag on the chart to select a group of points · Regression lines update to show trend of selected points";
+        clearBrushedRegLines();
+        // Restore full-data lines to full opacity
+        REGIONS.forEach(r => {
+          if (activeRegions.has(r)) fullRegLines[r].attr("opacity", 0.5);
+        });
+        applyVisibility();
         return;
       }
+
       const [[x0,y0],[x1,y1]] = selection;
       const sel = rows.filter(d => {
         const cx = xScale(d.renewPct), cy = yScale(d.co2);
         return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1
                && activeRegions.has(d.region);
       });
+
       if (sel.length === 0) {
         brushedStates = null;
         el.innerHTML = "No points in selection — try a different area";
-      } else {
-        brushedStates = new Set(sel.map(d => d.state + d.year));
-        const avgR   = d3.mean(sel, d => d.renewPct);
-        const avgC   = d3.mean(sel, d => d.co2);
-        const states = [...new Set(sel.map(d => d.state))].sort();
-        el.innerHTML =
-          `<strong>${sel.length} data point${sel.length > 1 ? "s" : ""}</strong>` +
-          ` (${states.length} state${states.length>1?"s":""}: ${states.join(", ")}) &nbsp;·&nbsp; ` +
-          `Avg renewable share <strong>${avgR.toFixed(1)}%</strong> &nbsp;·&nbsp; ` +
-          `Avg CO2 <strong>${d3.format(",.0f")(avgC)} mil. Mt</strong>`;
+        clearBrushedRegLines();
+        applyVisibility();
+        return;
       }
+
+      brushedStates = new Set(sel.map(d => d.state + d.year));
+      const avgR   = d3.mean(sel, d => d.renewPct);
+      const avgC   = d3.mean(sel, d => d.co2);
+      const states = [...new Set(sel.map(d => d.state))].sort();
+
+      el.innerHTML =
+        `<strong>${sel.length} data point${sel.length > 1 ? "s" : ""}</strong>` +
+        ` (${states.length} state${states.length>1?"s":""}: ${states.join(", ")}) &nbsp;·&nbsp; ` +
+        `Avg renewable share <strong>${avgR.toFixed(1)}%</strong> &nbsp;·&nbsp; ` +
+        `Avg CO2 <strong>${d3.format(",.0f")(avgC)} mil. Mt</strong>`;
+
+      // Dim full-data lines, show brushed lines
+      REGIONS.forEach(r => {
+        if (activeRegions.has(r)) fullRegLines[r].attr("opacity", 0.15);
+      });
+      updateBrushedRegLines(sel);
       applyVisibility();
     }
 
@@ -354,13 +411,13 @@ function initScatter(containerSelector) {
 
     brushLayer.select(".selection")
       .style("fill",         "rgba(74,154,110,0.10)")
-      .style("stroke",       "#2d7a4f")
+      .style("stroke",       "#1a7a4a")
       .style("stroke-width", "1.5");
 
     brushLayer.on("mousedown.tt", hideTT);
 
     // Initial render
     applyVisibility();
-    updateRegLines();
+    updateFullRegLines();
   }
 }
